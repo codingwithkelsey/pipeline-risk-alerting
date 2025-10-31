@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Health Checker - Executive Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f6f8fa;
+            color: #3e3f40;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: #f6f8fa;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3a4245;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #3e3f40;
+            font-style: italic;
+        }
+
+        /* Tiles */
+        .tile {
+            background: #ffffff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s;
+        }
+
+        .tile:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .tile-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #3a4245;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tile-subtitle {
+            font-size: 11px;
+            color: #3e3f40;
+            opacity: 0.7;
+            margin-bottom: 16px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* Metric Cards */
+        .metric {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .metric-value {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #3e3f40;
+            margin-bottom: 8px;
+        }
+
+        .metric-detail {
+            font-size: 12px;
+            color: #3e3f40;
+            opacity: 0.7;
+        }
+
+        .metric-primary { color: #2c5aa0; }
+        .metric-danger { color: #dc3545; }
+        .metric-warning { color: #ffc107; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        thead {
+            background: #f6f8fa;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #3a4245;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        tbody tr:hover {
+            background: #f6f8fa;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .expandable-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .expandable-row:hover {
+            background: #e8f4fd !important;
+        }
+
+        .detail-row {
+            display: none;
+            background: #f8f9fa !important;
+        }
+
+        .detail-row.show {
+            display: table-row;
+        }
+
+        .detail-content {
+            padding: 20px;
+            border-left: 3px solid #2c5aa0;
+        }
+
+        .detail-section {
+            margin-bottom: 16px;
+        }
+
+        .detail-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #3a4245;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .detail-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .detail-list li {
+            padding: 6px 0;
+            font-size: 13px;
+            color: #3e3f40;
+            line-height: 1.5;
+        }
+
+        .risk-factor {
+            color: #dc3545;
+        }
+
+        .action-item {
+            color: #2c5aa0;
+            font-weight: 500;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.2s;
+            font-size: 10px;
+            color: #3e3f40;
+            opacity: 0.5;
+        }
+
+        .expandable-row.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            min-width: 40px;
+        }
+
+        .risk-high { background: #dc3545; }
+        .risk-medium { background: #ffc107; }
+        .risk-low { background: #28a745; }
+
+        /* Chart Containers */
+        .chart-container {
+            padding: 20px;
+            min-height: 300px;
+        }
+
+        .bar {
+            height: 32px;
+            margin: 8px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #3e3f40;
+        }
+
+        .bar-label-name {
+            font-weight: 500;
+        }
+
+        .bar-label-value {
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            font-size: 12px;
+            color: #3e3f40;
+            opacity: 0.6;
+        }
+
+        @media print {
+            .footer {
+                display: none;
+            }
+        }
+
+        /* Donut Chart */
+        .donut-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .donut-chart {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 20px auto;
+        }
+
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-center-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3e3f40;
+        }
+
+        .donut-center-label {
+            font-size: 13px;
+            color: #3e3f40;
+            opacity: 0.7;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-3, .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Pipeline Health Checker</h1>
+                <p>Automated Risk Detection Analysis • Powered by SQL + DuckDB</p>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-3">
+            <div class="tile metric">
+                <div class="metric-value metric-primary">$13.0M</div>
+                <div class="metric-label">Total Pipeline</div>
+                <div class="metric-detail">45 Open Deals</div>
+            </div>
+
+            <div class="tile metric">
+                <div class="metric-value metric-danger">$2.7M</div>
+                <div class="metric-label">Pipeline at Risk</div>
+                <div class="metric-detail">8 Deals • 21% of Pipeline</div>
+            </div>
+
+            <div class="tile metric">
+                <div class="metric-value metric-warning">6.4</div>
+                <div class="metric-label">Avg Risk Score (At-Risk Deals)</div>
+                <div class="metric-detail">Overall Avg: 1.1 / 10</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-3">
+            <!-- Deal Distribution Donut -->
+            <div class="tile">
+                <div class="tile-title">Deal Distribution</div>
+                <div class="tile-subtitle">By Risk Level</div>
+                <div class="donut-container">
+                    <svg class="donut-chart" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="80" fill="none"
+                                stroke="#28a745" stroke-width="40"
+                                stroke-dasharray="413.0844444444444 502.4"
+                                transform="rotate(-90 100 100)"/>
+                        <circle cx="100" cy="100" r="80" fill="none"
+                                stroke="#ffc107" stroke-width="40"
+                                stroke-dasharray="44.657777777777774 502.4"
+                                stroke-dashoffset="-413.0844444444444"
+                                transform="rotate(-90 100 100)"/>
+                        <circle cx="100" cy="100" r="80" fill="none"
+                                stroke="#dc3545" stroke-width="40"
+                                stroke-dasharray="44.657777777777774 502.4"
+                                stroke-dashoffset="-457.7422222222222"
+                                transform="rotate(-90 100 100)"/>
+                    </svg>
+                    <div class="donut-center">
+                        <div class="donut-center-value">45</div>
+                        <div class="donut-center-label">Deals</div>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745"></div>
+                            <span>Healthy: 37 (82%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107"></div>
+                            <span>At Risk: 4 (9%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #dc3545"></div>
+                            <span>High Risk: 4 (9%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Value -->
+            <div class="tile">
+                <div class="tile-title">Pipeline Value</div>
+                <div class="tile-subtitle">By Risk Level ($M)</div>
+                <div class="chart-container">
+
+                    <div style="margin-bottom: 20px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">High Risk</span>
+                            <span class="bar-label-value">$1.7M</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 16.08412033881803%; background: #dc3545">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">At Risk</span>
+                            <span class="bar-label-value">$1.1M</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 10.300847045078376%; background: #ffc107">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Healthy</span>
+                            <span class="bar-label-value">$10.3M</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 100.0%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Rep Performance -->
+            <div class="tile">
+                <div class="tile-title">Rep Performance</div>
+                <div class="tile-subtitle">Average Risk Score</div>
+                <div class="chart-container">
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Amanda Singh</span>
+                            <span class="bar-label-value">7.5</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 75.0%; background: #dc3545">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Christopher Lee</span>
+                            <span class="bar-label-value">3.2</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 32.5%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Jennifer Martinez</span>
+                            <span class="bar-label-value">1.3</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 13.333333333333334%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">David Park</span>
+                            <span class="bar-label-value">1.2</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 12.0%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Sarah Chen</span>
+                            <span class="bar-label-value">1.0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 10.0%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Lisa Anderson</span>
+                            <span class="bar-label-value">0.6</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 5.714285714285714%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">James Kim</span>
+                            <span class="bar-label-value">0.0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 0.0%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div class="bar-label">
+                            <span class="bar-label-name">Emily Watson</span>
+                            <span class="bar-label-value">0.0</span>
+                        </div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: 0.0%; background: #28a745">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- At-Risk Deals Table -->
+        <div class="tile">
+            <div class="tile-title">Top At-Risk Deals Requiring Immediate Attention</div>
+            <div class="tile-subtitle">8 deals flagged</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Stage</th>
+                        <th>Amount</th>
+                        <th>Risk</th>
+                        <th>In Stage</th>
+                        <th>Last Activity</th>
+                        <th>Owner</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr class="expandable-row" onclick="toggleRow(0)">
+                        <td><span class="expand-icon">▶</span><strong>HR Software</strong></td>
+                        <td>Contract Negotiation</td>
+                        <td>$436K</td>
+                        <td><span class="risk-badge risk-high">9.0</span></td>
+                        <td>72d</td>
+                        <td>21d ago</td>
+                        <td>Sarah Chen</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-0">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 72 days</li>
+
+                                        <li class="risk-factor">No activity in 21 days</li>
+
+                                        <li class="risk-factor">Close date passed 6 days ago</li>
+
+                                        <li class="risk-factor">Missing: security_review_status</li>
+
+                                        <li class="risk-factor">Competing with Google Vertex AI</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Re-engage immediately - deal may be stalled</li>
+
+                                        <li class="action-item">• Review deal progression with manager</li>
+
+                                        <li class="action-item">• Initiate security review process</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(1)">
+                        <td><span class="expand-icon">▶</span><strong>InsureTech</strong></td>
+                        <td>Technical Evaluation</td>
+                        <td>$585K</td>
+                        <td><span class="risk-badge risk-high">8.0</span></td>
+                        <td>83d</td>
+                        <td>21d ago</td>
+                        <td>Christopher Lee</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-1">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 83 days</li>
+
+                                        <li class="risk-factor">No activity in 21 days</li>
+
+                                        <li class="risk-factor">Close date passed 7 days ago</li>
+
+                                        <li class="risk-factor">Competing with Google Vertex AI</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Re-engage immediately - deal may be stalled</li>
+
+                                        <li class="action-item">• Review deal progression with manager</li>
+
+                                        <li class="action-item">• Update close date and verify deal status</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(2)">
+                        <td><span class="expand-icon">▶</span><strong>Music Streaming</strong></td>
+                        <td>EB Sign Off</td>
+                        <td>$167K</td>
+                        <td><span class="risk-badge risk-high">8.0</span></td>
+                        <td>58d</td>
+                        <td>11d ago</td>
+                        <td>Amanda Singh</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-2">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 58 days</li>
+
+                                        <li class="risk-factor">No activity in 11 days</li>
+
+                                        <li class="risk-factor">Closing in 10 days</li>
+
+                                        <li class="risk-factor">Missing: security_review_status, economic_buyer</li>
+
+                                        <li class="risk-factor">Competing with OpenAI</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Schedule follow-up call this week</li>
+
+                                        <li class="action-item">• Review deal progression with manager</li>
+
+                                        <li class="action-item">• Identify and engage economic buyer</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(3)">
+                        <td><span class="expand-icon">▶</span><strong>MediaGroup</strong></td>
+                        <td>EB Sign Off</td>
+                        <td>$464K</td>
+                        <td><span class="risk-badge risk-high">7.0</span></td>
+                        <td>50d</td>
+                        <td>18d ago</td>
+                        <td>Amanda Singh</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-3">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 50 days</li>
+
+                                        <li class="risk-factor">No activity in 18 days</li>
+
+                                        <li class="risk-factor">Closing in 5 days</li>
+
+                                        <li class="risk-factor">Missing: security_review_status</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Re-engage immediately - deal may be stalled</li>
+
+                                        <li class="action-item">• Initiate security review process</li>
+
+                                        <li class="action-item">• Verify all requirements met for close</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(4)">
+                        <td><span class="expand-icon">▶</span><strong>Gaming Studios</strong></td>
+                        <td>EB Sign Off</td>
+                        <td>$318K</td>
+                        <td><span class="risk-badge risk-medium">6.0</span></td>
+                        <td>50d</td>
+                        <td>11d ago</td>
+                        <td>David Park</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-4">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 50 days</li>
+
+                                        <li class="risk-factor">No activity in 11 days</li>
+
+                                        <li class="risk-factor">Missing: next_step, security_review_status</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Schedule follow-up call this week</li>
+
+                                        <li class="action-item">• Initiate security review process</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(5)">
+                        <td><span class="expand-icon">▶</span><strong>FoodService Systems</strong></td>
+                        <td>Technical Evaluation</td>
+                        <td>$176K</td>
+                        <td><span class="risk-badge risk-medium">5.0</span></td>
+                        <td>45d</td>
+                        <td>18d ago</td>
+                        <td>Christopher Lee</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-5">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Stuck in stage for 45 days</li>
+
+                                        <li class="risk-factor">No activity in 18 days</li>
+
+                                        <li class="risk-factor">Missing: technical_champion, economic_buyer</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Re-engage immediately - deal may be stalled</li>
+
+                                        <li class="action-item">• Identify and engage economic buyer</li>
+
+                                        <li class="action-item">• Secure technical champion sponsor</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(6)">
+                        <td><span class="expand-icon">▶</span><strong>Research Institute</strong></td>
+                        <td>Technical Evaluation</td>
+                        <td>$387K</td>
+                        <td><span class="risk-badge risk-medium">4.0</span></td>
+                        <td>23d</td>
+                        <td>4d ago</td>
+                        <td>Jennifer Martinez</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-6">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">Missing: technical_champion</li>
+
+                                        <li class="risk-factor">Competing with OpenAI</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Secure technical champion sponsor</li>
+
+                                        <li class="action-item">• Develop competitive strategy vs OpenAI</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="expandable-row" onclick="toggleRow(7)">
+                        <td><span class="expand-icon">▶</span><strong>Aerospace Systems</strong></td>
+                        <td>Solution Mapping</td>
+                        <td>$177K</td>
+                        <td><span class="risk-badge risk-medium">4.0</span></td>
+                        <td>32d</td>
+                        <td>17d ago</td>
+                        <td>Lisa Anderson</td>
+                    </tr>
+
+                    <tr class="detail-row" id="detail-7">
+                        <td colspan="7">
+                            <div class="detail-content">
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Risk Factors</div>
+                                    <ul class="detail-list">
+
+                                        <li class="risk-factor">No activity in 17 days</li>
+
+                                        <li class="risk-factor">Missing: economic_buyer</li>
+
+                                    </ul>
+                                </div>
+                                <div class="detail-section">
+                                    <div class="detail-section-title">Recommended Actions</div>
+                                    <ul class="detail-list">
+
+                                        <li class="action-item">• Re-engage immediately - deal may be stalled</li>
+
+                                        <li class="action-item">• Identify and engage economic buyer</li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            SQL-Based Risk Analysis • Data as of Oct 30, 2025
+        </div>
+    </div>
+
+    <script>
+        // Toggle expandable row details
+        function toggleRow(index) {
+            const detailRow = document.getElementById('detail-' + index);
+            const expandRow = event.currentTarget;
+
+            if (detailRow.classList.contains('show')) {
+                detailRow.classList.remove('show');
+                expandRow.classList.remove('expanded');
+            } else {
+                detailRow.classList.add('show');
+                expandRow.classList.add('expanded');
+            }
+        }
+
+        // Add smooth scroll animation on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const bars = document.querySelectorAll('.bar-fill');
+            bars.forEach((bar, index) => {
+                setTimeout(() => {
+                    bar.style.transition = 'width 0.8s ease-out';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
