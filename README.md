@@ -28,7 +28,7 @@ Each deal is scored on a **standardized 0-2 point scale** across 5 dimensions:
 | **Activity Gap** | ≤7 days (0) / 8-14 days (1) / 15+ days (2) | 0-2 pts |
 | **Missing Fields** | None (0) / 1 field (1) / 2+ fields (2) | 0-2 pts |
 | **Close Date Risk** | 30+ days (0) / 7-29 days (1) / <7 or past due (2) | 0-2 pts |
-| **Competitor Threat** | None (0) / OpenAI or Google (2) | 0 or 2 pts |
+| **Competitor Threat** | None (0) / Competitor | 0 or 2 pts |
 
 **Overall Risk Score** = Sum of signals (max 10 points)
 
