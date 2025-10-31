@@ -2,6 +2,9 @@
 
 **Automated risk detection for GTM teams** - A demonstration of how to build scalable processes that create leverage during hypergrowth.
 
+This can be re-used with any salesforce_opportunity table, and customized benchmarks!
+
+
 ## Problem Statement
 
 Leadership needs a way to quickly understand pipeline health - identifying stalled deals, deals that need intervention, deals with poor salesforce hygiene, and tracking overall velocity.
@@ -30,6 +33,8 @@ Each deal is scored on a **standardized 0-2 point scale** across 5 dimensions:
 | **Close Date Risk** | 30+ days (0) / 7-29 days (1) / <7 or past due (2) | 0-2 pts |
 | **Competitor Threat** | None (0) / Competitor | 0 or 2 pts |
 
+These are boilerplate, ideally these should be customized using existing data on where deals fail.
+
 **Overall Risk Score** = Sum of signals (max 10 points)
 
 - **0-3** = Healthy (green)
@@ -45,6 +50,9 @@ The system checks for missing critical fields based on deal stage:
 - **EB Sign Off+**: Must have Economic Buyer + Technical Champion + Security Review "Complete"
 - **Contract Negotiation**: Must have Economic Buyer + Technical Champion + Security Review "Complete"
 
+These are boilerplate, ideally these should be customized based on key salesforce fields for your business logic/processes
+
+
 ### Stage Benchmarks
 
 Each stage has expected duration ranges:
@@ -55,6 +63,7 @@ Each stage has expected duration ranges:
 - **EB Sign Off**: 10-21 days
 - **Contract Negotiation**: 14-28 days
 
+These are boilerplate, ideally these should be customized based on average time in stage for closed/won deals
 
 ## Quick Start
 
@@ -73,6 +82,8 @@ Output:
 
 ### Generate Dashboard
 
+Ideally this happens in your company's BI tool, but can also be exported as a standalone html file 
+
 ```bash
 # Setup (first time only)
 python3 -m venv venv
@@ -84,6 +95,4 @@ python scripts/generate_html_dashboard.py
 ```
 
 Then open `pipeline_dashboard.html` in your browser to view the interactive dashboard.
-
-This can be recreated with any salesforce_opportunity dataset and customized benchmarks
 
